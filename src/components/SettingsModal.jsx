@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import {
-  LS_API_KEY,
   LS_SUGGESTION_PROMPT,
   LS_CHAT_PROMPT,
   DEFAULT_SUGGESTION_SYSTEM,
