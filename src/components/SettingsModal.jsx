@@ -30,21 +30,19 @@ const EyeIcon = ({ show }) => show ? (
  *   onClose    {function}
  *   onSave     {function(apiKey: string)}
  */
-export default function SettingsModal({ onClose, onSave }) {
-  const [apiKey,      setApiKey]      = useState('')
+export default function SettingsModal({ initialApiKey = '', onClose, onSave }) {
+  const [apiKey,      setApiKey]      = useState(initialApiKey)
   const [showKey,     setShowKey]     = useState(false)
   const [suggPrompt,  setSuggPrompt]  = useState('')
   const [chatPrompt,  setChatPrompt]  = useState('')
   const [saved,       setSaved]       = useState(false)
 
   useEffect(() => {
-    setApiKey(localStorage.getItem(LS_API_KEY) || '')
     setSuggPrompt(localStorage.getItem(LS_SUGGESTION_PROMPT) || DEFAULT_SUGGESTION_SYSTEM)
     setChatPrompt(localStorage.getItem(LS_CHAT_PROMPT)       || DEFAULT_CHAT_SYSTEM)
   }, [])
 
   const handleSave = () => {
-    localStorage.setItem(LS_API_KEY,           apiKey.trim())
     localStorage.setItem(LS_SUGGESTION_PROMPT, suggPrompt)
     localStorage.setItem(LS_CHAT_PROMPT,       chatPrompt)
     onSave(apiKey.trim())
@@ -99,7 +97,7 @@ export default function SettingsModal({ onClose, onSave }) {
                  style={{ color: 'var(--cyan)', textDecoration: 'none' }}>
                 console.groq.com/keys
               </a>
-              . Stored only in your browser's localStorage.
+              . Key is NOT saved and will clear on refresh.
             </p>
           </div>
 

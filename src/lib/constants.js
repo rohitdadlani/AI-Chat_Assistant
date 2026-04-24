@@ -58,6 +58,5 @@ export const DEFAULT_SUGGESTION_SYSTEM = `You are an expert AI meeting assistant
 export const DEFAULT_CHAT_SYSTEM = `You are TwinMind, an AI meeting copilot. You have full context of the ongoing meeting transcript. Provide clear, actionable, and concise responses to help the user in their meeting.`
 
 // ── localStorage keys ─────────────────────────────────────────────────────
-export const LS_API_KEY           = 'twinmind_api_key'
 export const LS_SUGGESTION_PROMPT = 'twinmind_suggestion_prompt'
 export const LS_CHAT_PROMPT       = 'twinmind_chat_prompt'

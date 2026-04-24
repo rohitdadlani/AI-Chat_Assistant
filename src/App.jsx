@@ -5,7 +5,6 @@ import ChatPanel        from './components/ChatPanel.jsx'
 import SettingsModal    from './components/SettingsModal.jsx'
 import ExportButton     from './components/ExportButton.jsx'
 import { useSuggestionEngine } from './hooks/useSuggestionEngine.js'
-import { LS_API_KEY }   from './lib/constants.js'
 
 // ── Toast ─────────────────────────────────────────────────────────────────
 function Toast({ message, type, onClose }) {
@@ -42,8 +41,8 @@ const SettingsIcon = () => (
 // ── App ───────────────────────────────────────────────────────────────────
 export default function App() {
   // ── Global state (API key, modal) ────────────────────────────────────
-  const apiKeyRef = useRef(localStorage.getItem(LS_API_KEY) || '')
-  const [showSettings, setShowSettings] = useState(!apiKeyRef.current)
+  const apiKeyRef = useRef('')
+  const [showSettings, setShowSettings] = useState(true)
   const [toast,        setToast]        = useState(null)
 
   // ── Shared transcript state ──────────────────────────────────────────
@@ -177,6 +176,7 @@ export default function App() {
       {/* ── Settings Modal ───────────────────────────────────────────── */}
       {showSettings && (
         <SettingsModal
+          initialApiKey={apiKeyRef.current}
           onClose={() => setShowSettings(false)}
           onSave={handleSettingsSave}
         />
