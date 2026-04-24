@@ -51,9 +51,12 @@ export default function App() {
   // Flat string for suggestion engine + chat context (stored in ref to avoid loops)
   const transcriptRef = useRef('')
 
-  // ── Suggestion state (owned here, passed to SuggestionsPanel) ────────
-  const [suggestions,      setSuggestions]      = useState([])
-  const [suggestionsLoading, setSuggestionsLoading] = useState(false)
+  // ── Suggestion batches — all historical batches, newest first ──────────
+  const [suggestionBatches,    setSuggestionBatches]    = useState([])
+  const [suggestionsLoading,   setSuggestionsLoading]   = useState(false)
+
+  // ── Chat messages ref — ChatPanel keeps this current for export ──────────
+  const chatMessagesRef = useRef([])
 
   // ── Injected suggestion → ChatPanel ──────────────────────────────────
   const [injectedSuggestion, setInjectedSuggestion] = useState(null)
@@ -72,9 +75,15 @@ export default function App() {
   }, [])
 
   // ── Suggestion engine ────────────────────────────────────────────────
-  const { start: startSuggestions, stop: stopSuggestions } = useSuggestionEngine(
+  // onSuggestions: prepend a new dated batch so history accumulates
+  const handleNewSuggestions = useCallback((items) => {
+    const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    setSuggestionBatches(prev => [{ ts, items }, ...prev])
+  }, [])
+
+  const { start: startSuggestions, stop: stopSuggestions, refresh: refreshSuggestions } = useSuggestionEngine(
     transcriptRef,
-    setSuggestions,
+    handleNewSuggestions,
     setSuggestionsLoading,
     showError,
     apiKeyRef,
@@ -98,10 +107,12 @@ export default function App() {
 
   // ── Export payload ───────────────────────────────────────────────────
   const getExportPayload = useCallback(() => ({
+    exportedAt: new Date().toISOString(),
     transcript: transcriptLines,
-    suggestions,
     transcriptText: transcriptRef.current,
-  }), [transcriptLines, suggestions])
+    suggestionBatches,               // all batches with timestamps
+    chat: chatMessagesRef.current,   // full chat history
+  }), [transcriptLines, suggestionBatches])
 
   return (
     <>
@@ -157,9 +168,10 @@ export default function App() {
 
           {/* Middle: Suggestions */}
           <SuggestionsPanel
-            suggestions={suggestions}
+            suggestionBatches={suggestionBatches}
             loading={suggestionsLoading}
             onExpand={handleSuggestionExpand}
+            onRefresh={refreshSuggestions}
           />
 
           {/* Right: Chat */}
@@ -169,6 +181,7 @@ export default function App() {
             onError={showError}
             injectedMsg={injectedSuggestion}
             onInjected={() => setInjectedSuggestion(null)}
+            messagesRef={chatMessagesRef}
           />
         </div>
       </div>

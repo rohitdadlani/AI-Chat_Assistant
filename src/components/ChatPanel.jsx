@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useChat } from '../hooks/useChat.js'
+import ReactMarkdown from 'react-markdown'
 
 const SendIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -16,7 +17,7 @@ const SendIcon = () => (
  *   injectedMsg    {object|null}  — suggestion to inject
  *   onInjected     {function}     — clear injected msg
  */
-export default function ChatPanel({ apiKeyRef, transcriptRef, onError, injectedMsg, onInjected }) {
+export default function ChatPanel({ apiKeyRef, transcriptRef, onError, injectedMsg, onInjected, messagesRef }) {
   const [messages, setMessages]   = useState([])
   const [input, setInput]         = useState('')
   const [streaming, setStreaming] = useState(false)
@@ -25,8 +26,14 @@ export default function ChatPanel({ apiKeyRef, transcriptRef, onError, injectedM
 
   // Stable callbacks that don't cause re-renders in hooks
   const addMessage = useCallback((msg) => {
-    setMessages(prev => [...prev, { ...msg, id: Date.now() + Math.random() }])
+    const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    setMessages(prev => [...prev, { ...msg, id: Date.now() + Math.random(), ts }])
   }, [])
+
+  // Keep messagesRef current for export (without triggering re-renders)
+  useEffect(() => {
+    if (messagesRef) messagesRef.current = messages
+  }, [messages, messagesRef])
 
   const updateLast = useCallback((updater, done = false) => {
     setMessages(prev => {
@@ -110,12 +117,34 @@ export default function ChatPanel({ apiKeyRef, transcriptRef, onError, injectedM
             style={{ display: 'flex', flexDirection: 'column', alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start' }}
           >
             <span style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>
-              {msg.role === 'user' ? 'You' : 'TwinMind'}
+              {msg.role === 'user' ? 'You' : 'TwinMind'}{msg.ts ? ` · ${msg.ts}` : ''}
             </span>
             <div className={`chat-bubble ${msg.role} ${msg.streaming ? 'streaming-cursor' : ''}`}>
-              <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'var(--font-sans)', fontSize: 13.5, margin: 0, lineHeight: 1.6 }}>
-                {msg.content}
-              </pre>
+              {msg.role === 'user' ? (
+                <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6 }}>{msg.content}</p>
+              ) : (
+                <ReactMarkdown
+                  components={{
+                    p:      ({ children }) => <p style={{ margin: '0 0 8px', fontSize: 13.5, lineHeight: 1.65 }}>{children}</p>,
+                    ul:     ({ children }) => <ul style={{ margin: '4px 0 8px', paddingLeft: 18, fontSize: 13.5, lineHeight: 1.65 }}>{children}</ul>,
+                    ol:     ({ children }) => <ol style={{ margin: '4px 0 8px', paddingLeft: 18, fontSize: 13.5, lineHeight: 1.65 }}>{children}</ol>,
+                    li:     ({ children }) => <li style={{ marginBottom: 4 }}>{children}</li>,
+                    strong: ({ children }) => <strong style={{ color: 'var(--cyan)', fontWeight: 600 }}>{children}</strong>,
+                    em:     ({ children }) => <em style={{ color: 'var(--violet)' }}>{children}</em>,
+                    h1:     ({ children }) => <h1 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 8px', color: 'var(--text-primary)' }}>{children}</h1>,
+                    h2:     ({ children }) => <h2 style={{ fontSize: 14, fontWeight: 600, margin: '0 0 6px', color: 'var(--text-primary)' }}>{children}</h2>,
+                    h3:     ({ children }) => <h3 style={{ fontSize: 13.5, fontWeight: 600, margin: '0 0 6px', color: 'var(--text-secondary)' }}>{children}</h3>,
+                    code:   ({ children }) => <code style={{ background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4, fontFamily: 'var(--font-mono)', fontSize: 12 }}>{children}</code>,
+                    blockquote: ({ children }) => <blockquote style={{ borderLeft: '3px solid var(--border-bright)', margin: '6px 0', paddingLeft: 12, color: 'var(--text-secondary)' }}>{children}</blockquote>,
+                    table:  ({ children }) => <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 12.5, margin: '6px 0' }}>{children}</table>,
+                    th:     ({ children }) => <th style={{ padding: '5px 10px', borderBottom: '1px solid var(--border-bright)', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{children}</th>,
+                    td:     ({ children }) => <td style={{ padding: '5px 10px', borderBottom: '1px solid var(--border)', color: 'var(--text-primary)' }}>{children}</td>,
+                    hr:     () => <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '8px 0' }} />,
+                  }}
+                >
+                  {msg.content}
+                </ReactMarkdown>
+              )}
             </div>
           </div>
         ))}

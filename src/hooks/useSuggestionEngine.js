@@ -48,5 +48,5 @@ export function useSuggestionEngine(transcriptRef, onSuggestions, onLoading, onE
     clearInterval(intervalRef.current)
   }, [])
 
-  return { start, stop }
+  return { start, stop, refresh: fetchSuggestions }
 }
